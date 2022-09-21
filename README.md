@@ -1,4 +1,4 @@
-# CJAX - Continuuously Joined Action Exchange
+# CJAX - Continuously Joined Action Exchange
 
 Well actually it's just my initials followed by an X haha
 
