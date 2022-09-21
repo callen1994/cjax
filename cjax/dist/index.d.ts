@@ -19,8 +19,6 @@ export declare type EmitterTuple<T> = {
     [K in keyof T]: Emitter<T[K]> | undefined;
 };
 export declare function cjaxJoin<A extends unknown[]>(...emitters: [...EmitterTuple<A>]): Emitter<A> | undefined;
-export declare function deepDistinctPipe<T>(): (newState: T) => T | undefined;
-export declare function deepDistinctCallback<T>(init: T): (newState: T) => T;
 export declare type IffyMitter<T> = Emitter<T> | Emitter<T | undefined> | undefined;
 export declare type IffyServ<T> = Service<T> | Service<T | undefined> | undefined;
 export {};

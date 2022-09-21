@@ -1,12 +1,29 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react"; // Because of react, this file is not safe to import on the server
-import { deepDistinctCallback } from "@cjax/cjax";
-export function useCJAX(serv) {
+// This can be overridden by the user if they want a global default here...
+export const CJAX_FIG = {
+    // if you set a copier that returns something that's not === then the comparator needs to be defined
+    DEFAULT_COMPARATOR: undefined,
+    DEFAULT_COPY: undefined,
+};
+export function useCJAX(serv, equalTestOverride, copyerOverride) {
     const getData = useMemo(() => {
-        // Creates a cached value of the last current() on the server
-        const deepDistinctGetter = deepDistinctCallback(serv?.current());
-        // when called it compares the current to the cached. If they're different it returns a new deep clone of the current (and caches it)
-        // if they're the same it returns the previously cached value (which will be === the previous value)
-        return () => deepDistinctGetter(serv?.current());
+        if (!serv)
+            return () => undefined;
+        const equalTest = equalTestOverride || CJAX_FIG.DEFAULT_COMPARATOR;
+        const copyer = copyerOverride || CJAX_FIG.DEFAULT_COPY;
+        if (!equalTest || !copyer) {
+            if (equalTest || copyer)
+                console.warn("You passed a equal test, but not a copyer function. because a default wasn't provided to the function that you didn't pass the function you did pass is getting ignored...");
+            return () => serv?.current();
+        }
+        let cachedState = copyer(serv.current());
+        return () => {
+            const newState = serv.current();
+            if (!equalTest(cachedState, newState)) {
+                cachedState = copyer(newState);
+            }
+            return cachedState;
+        };
     }, [serv]);
     return useSyncExternalStore(serv?.listen ||
         (() => {
@@ -53,7 +70,7 @@ export function usePipeHere(pipeBuilder, // * usePipe and the Constructor
 reducerDeps = [], opts) {
     // Skipping the internal listener because it shouldn't be necessary. I'm listening just below in the useCJAX hook
     const piped$ = usePipe(pipeBuilder, reducerDeps, { ...opts, dontListenInternal: true });
-    const data = useCJAX(piped$);
+    const data = useCJAX(piped$, opts?.equalTest, opts?.copyer);
     return [data, piped$];
 }
 ////////////////////////////////////////////////////////////////////////////////////////////

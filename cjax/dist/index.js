@@ -1,5 +1,7 @@
-import cloneDeep from "lodash.clonedeep";
-import deepEqual from "deep-equal";
+// Rather than importing all of Rxjs, I'm going to implement the essential pieces of it as a state management system
+// at least, that's what's going on conceptually. I think concretely there will be some differences between what my stuff does
+// and how rxjs is built, but I know what I want and I don't want to work around the mysteries/and finnicky bits of rxjs unless I'm really using
+// the whole library of operators
 // From a typing perspective the Service is an emitter with more features, but from an implementation perspective
 // the emitter is literally a Service with it's update function chopped off.
 //
@@ -114,27 +116,24 @@ export function cjaxJoin(...emitters) {
     }));
     return asEmitter(joined);
 }
-export function deepDistinctPipe() {
-    let cachedState;
-    return (newState) => {
-        if (!deepEqual(newState, cachedState)) {
-            cachedState = cloneDeep(newState);
-            return cachedState;
-        }
-        else
-            return undefined; // The idea with this pipe is that when the new state is deepEqual to the old state, I return undefined, which (with how I've written pipes) will prevent an event from getting processed through
-    };
-}
-// Takes an initial value and returns a function for processing the new state
-export function deepDistinctCallback(init) {
-    let cachedState = init;
-    return (newState) => {
-        // The returned function checks whether the new state is meaningfully different from the old state (!deepEqual)
-        // If they are different it re-assigns cachedState to a copy of newState. This will be !== from the old state (ensuring a react re-render)
-        if (!deepEqual(newState, cachedState))
-            cachedState = cloneDeep(newState);
-        // If the re-assignment above did't happen, then the cachedState will be returned. If this is being used to parse the output of a service, then the cachedState will be === equal to the last event (ensuring react doesn't do a re-render)
-        return cachedState;
-    };
-}
+// export function deepDistinctPipe<T>() {
+//   let cachedState: T | undefined;
+//   return (newState: T) => {
+//     if (!deepEqual(newState, cachedState)) {
+//       cachedState = cloneDeep(newState);
+//       return cachedState;
+//     } else return undefined; // The idea with this pipe is that when the new state is deepEqual to the old state, I return undefined, which (with how I've written pipes) will prevent an event from getting processed through
+//   };
+// }
+// // Takes an initial value and returns a function for processing the new state
+// export function deepDistinctCallback<T>(init: T) {
+//   let cachedState: T = init;
+//   return (newState: T) => {
+//     // The returned function checks whether the new state is meaningfully different from the old state (!deepEqual)
+//     // If they are different it re-assigns cachedState to a copy of newState. This will be !== from the old state (ensuring a react re-render)
+//     if (!deepEqual(newState, cachedState)) cachedState = cloneDeep(newState);
+//     // If the re-assignment above did't happen, then the cachedState will be returned. If this is being used to parse the output of a service, then the cachedState will be === equal to the last event (ensuring react doesn't do a re-render)
+//     return cachedState;
+//   };
+// }
 const zeroListenersReason = "the number of listeners to this service dropped to 0";
