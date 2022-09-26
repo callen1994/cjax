@@ -2,39 +2,33 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react"; // B
 import { Emitter, Service } from "@cjax/cjax";
 
 // This can be overridden by the user if they want a global default here...
-export const CJAX_FIG: {
-  DEFAULT_COMPARATOR: undefined | ((a: any, b: any) => boolean);
-  DEFAULT_COPY: undefined | ((val: any) => any);
-} = {
-  // if you set a copier that returns something that's not === then the comparator needs to be defined
-  DEFAULT_COMPARATOR: undefined,
-  DEFAULT_COPY: undefined,
+
+// Either an empty object or it's neither
+export type CjaxDistincterFig = {
+  comparator: (a: any, b: any) => boolean;
+  copy: (val: any) => any;
 };
 
-export function useCJAX<T>(
-  serv: Emitter<T> | undefined,
-  equalTestOverride?: (prev: T | undefined, next: T | undefined) => boolean,
-  copyerOverride?: (val: T | undefined) => T | undefined
-): T | undefined {
+const CJAX_DEFAULT_DISTINCT_FIG: CjaxDistincterFig | {} = {};
+
+export function SET_CJAX_FIG() {}
+
+export function useCJAX<T>(serv: Emitter<T> | undefined, distincterFig?: CjaxDistincterFig): T {
   const getData = useMemo(() => {
     if (!serv) return () => undefined;
 
-    const equalTest = equalTestOverride || CJAX_FIG.DEFAULT_COMPARATOR;
-    const copyer = copyerOverride || CJAX_FIG.DEFAULT_COPY;
-
-    if (!equalTest || !copyer) {
-      if (equalTest || copyer)
-        console.warn(
-          "You passed a equal test, but not a copyer function. because a default wasn't provided to the function that you didn't pass the function you did pass is getting ignored..."
-        );
+    if (!distincterFig && !("comparator" in CJAX_DEFAULT_DISTINCT_FIG)) {
       return () => serv?.current();
     }
 
-    let cachedState = copyer(serv.current());
+    const { copy, comparator } = distincterFig ? distincterFig : (CJAX_DEFAULT_DISTINCT_FIG as CjaxDistincterFig);
+
+    let cachedState = copy(serv.current());
+
     return () => {
       const newState = serv.current();
-      if (!equalTest(cachedState, newState)) {
-        cachedState = copyer(newState);
+      if (!comparator(cachedState, newState)) {
+        cachedState = copy(newState);
       }
       return cachedState;
     };
@@ -92,13 +86,12 @@ export function usePipeHere<T>(
   reducerDeps: any[] = [],
   opts?: {
     test?: string;
-    equalTest?: (prev: T | undefined, next: T | undefined) => boolean;
-    copyer?: (val: T | undefined) => T | undefined;
+    distincter?: CjaxDistincterFig;
   }
 ) {
   // Skipping the internal listener because it shouldn't be necessary. I'm listening just below in the useCJAX hook
   const piped$ = usePipe(pipeBuilder, reducerDeps, { ...opts, dontListenInternal: true });
-  const data = useCJAX(piped$, opts?.equalTest, opts?.copyer);
+  const data = useCJAX(piped$, opts?.distincter);
   return [data, piped$] as const;
 }
 

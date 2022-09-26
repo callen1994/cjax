@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@cjax/cjax": "^1.0.2",
-    "@cjax/cjax-hooks": "^1.0.2",
+    "@cjax/cjax": "^1.1.1",
+    "@cjax/cjax-hooks": "^1.1.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
