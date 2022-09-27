@@ -9,9 +9,11 @@ export type CjaxDistincterFig = {
   copy: (val: any) => any;
 };
 
-const CJAX_DEFAULT_DISTINCT_FIG: CjaxDistincterFig | {} = {};
+let CJAX_DEFAULT_DISTINCT_FIG: CjaxDistincterFig | {} = {};
 
-export function SET_CJAX_FIG() {}
+export function SET_CJAX_HOOK_FIG(fig: CjaxDistincterFig) {
+  CJAX_DEFAULT_DISTINCT_FIG = fig;
+}
 
 export function useCJAX<T>(serv: Emitter<T> | undefined, distincterFig?: CjaxDistincterFig): T {
   const getData = useMemo(() => {
