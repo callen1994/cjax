@@ -184,3 +184,5 @@ const zeroListenersReason = "the number of listeners to this service dropped to 
 
 export type IffyMitter<T> = Emitter<T> | Emitter<T | undefined> | undefined;
 export type IffyServ<T> = Service<T> | Service<T | undefined> | undefined;
+
+export type EmitterValue<T extends Emitter<any> | undefined> = T extends Emitter<infer U> ? U : never;

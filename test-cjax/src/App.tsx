@@ -1,44 +1,9 @@
-import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import "./App.css";
-import { CJAXService } from "@cjax/cjax";
-import { useCJAX } from "@cjax/cjax-hooks";
+import { INIT_ROUTER } from "./Router";
+import { useEffect } from "react";
+import TestMenu from "./TestMenu";
 
-const TEST_SERVICE = CJAXService(1);
+export default function App() {
+  useEffect(() => INIT_ROUTER(), []);
 
-function App() {
-  const count = useCJAX(TEST_SERVICE);
-
-  return (
-    <div className="App">
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src="/vite.svg" className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://reactjs.org" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => TEST_SERVICE.update((count) => count + 1)}>count is {count}</button>
-        <ShowItAgain />
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
-    </div>
-  );
-}
-
-export default App;
-
-function ShowItAgain() {
-  const count = useCJAX(TEST_SERVICE);
-  return (
-    <div>
-      <strong>{count}</strong>
-    </div>
-  );
+  return <TestMenu />;
 }
