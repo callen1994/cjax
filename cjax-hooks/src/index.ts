@@ -5,8 +5,8 @@ import { Emitter, Service } from "@cjax/cjax";
 
 // Either an empty object or it's neither
 export type CjaxDistincterFig = {
-  comparator: (a: any, b: any) => boolean;
-  copy: (val: any) => any;
+  comparator: <T>(a: T, b: T) => boolean;
+  copy: <T>(val: T) => T;
 };
 
 let CJAX_DEFAULT_DISTINCT_FIG: CjaxDistincterFig | {} = {};
@@ -15,7 +15,7 @@ export function SET_CJAX_HOOK_FIG(fig: CjaxDistincterFig) {
   CJAX_DEFAULT_DISTINCT_FIG = fig;
 }
 
-export function useCJAX<T>(serv: Emitter<T> | undefined, distincterFig?: CjaxDistincterFig): T {
+export function useCJAX<T>(serv: Emitter<T> | undefined, distincterFig?: CjaxDistincterFig): T | undefined {
   const getData = useMemo(() => {
     if (!serv) return () => undefined;
 

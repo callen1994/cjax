@@ -10,6 +10,8 @@
     "re-link": "npm link @cjax/cjax @cjax/cjax-hooks"
   },
   "dependencies": {
+    "@cjax/cjax": "^1.1.3",
+    "@cjax/cjax-hooks": "^1.1.5",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

@@ -8,7 +8,7 @@
 export interface Emitter<T> {
   listen: (listener: (x: T) => any, skipCurrent?: boolean | "SKIP CURRENT") => () => void; // take a listener, returns the unsubscribe function
   pipe: <O>(modifier: (x: T) => O, keepAlive?: boolean, test?: string) => Emitter<O | undefined>; // takes a modifier that operates on my T type and returns a new emitter with a different output type
-  current: () => T | undefined;
+  current: () => T;
   complete: (reason: string) => void; // for react reasons it's important to clean up a subscription like this. // The reason will make it much easier to debug (and even give preemptive warnings) to keep state well controlled
 }
 
@@ -70,7 +70,7 @@ export function CJAXService<T>(init: T, opts?: ServiceOpts): Service<T> {
     let pipeCleanup: (() => void) | undefined;
     // A piped service like this will always clean itself up. If I want to create a pipe that doesn't do this I can just
     // create that service manually and then manage the unsubscription on my own.
-    const piped = CJAXService<O | undefined>(init, {
+    const piped = CJAXService(init, {
       test: internalTestVal,
       extraCleanupFun: () => pipeCleanup?.(),
       keepAlive,
