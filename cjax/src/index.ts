@@ -1,3 +1,38 @@
+import { CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG } from "@cjax/cjax-distinction";
+export { SET_CJAX_DISTINCTION_FIG, CjaxDistincterFig } from "@cjax/cjax-distinction";
+
+// * If this is null, nothing should happen here
+var SLOW_POKE_HUNTER: {
+  timeThreshold: number;
+  alertInterval: number;
+  issues: { closureStack: Error; stack: Error; elapsedTime: number; repeatedArg: boolean }[];
+} | null = null;
+
+function catchSlowPoke<T>(elapsedTime: number, e: T, prevArg: T, closureStack: Error) {
+  if (!SLOW_POKE_HUNTER) return;
+  const isSlow = elapsedTime > SLOW_POKE_HUNTER.timeThreshold;
+  if (isSlow) {
+    SLOW_POKE_HUNTER.issues.push({
+      closureStack,
+      stack: new Error(),
+      elapsedTime,
+      repeatedArg: CJAX_DEFAULT_DISTINCT_FIG?.comparator(e, prevArg) || false,
+    });
+    const intervalCheck = SLOW_POKE_HUNTER.alertInterval;
+    if (SLOW_POKE_HUNTER.issues.length === intervalCheck) console.warn(`Found ${intervalCheck} slow pipe events`);
+    else if (SLOW_POKE_HUNTER.issues.length % intervalCheck === 0)
+      console.warn(`Found ${intervalCheck} more slow pipe events`);
+  }
+}
+
+export function initiateSlowPokeHunter(timeThreshold: number, alertInterval: number = 5) {
+  SLOW_POKE_HUNTER = { timeThreshold, alertInterval, issues: [] };
+}
+
+export function slowPokeReport() {
+  return SLOW_POKE_HUNTER;
+}
+
 // Rather than importing all of Rxjs, I'm going to implement the essential pieces of it as a state management system
 // at least, that's what's going on conceptually. I think concretely there will be some differences between what my stuff does
 // and how rxjs is built, but I know what I want and I don't want to work around the mysteries/and finnicky bits of rxjs unless I'm really using
@@ -21,7 +56,7 @@ export interface Service<T> extends Emitter<T> {
 //
 // I want each node in my state management tree to basically work the same way (holds a state and emits to it's listeners)
 // I have a child lock where I need it, to prevent drunken chaos, but other than that, it's just a bunch of these stateful emitters listening to each other and emitting when necessary
-function asEmitter<T>(serv: Service<T>): Emitter<T> {
+export function asEmitter<T>(serv: Service<T>): Emitter<T> {
   return {
     listen: serv.listen,
     pipe: serv.pipe,
@@ -63,6 +98,9 @@ export function CJAXService<T>(init: T, opts?: ServiceOpts): Service<T> {
   }
 
   function pipe<O>(modifier: (t: T) => O, keepAlive = false, pipeTest?: string) {
+    const closureStack = new Error();
+    let prevArg: T;
+
     const internalTestVal = pipeTest || opts?.test;
     // Pipes should, by default, clean themselves up, this is particularly important if I chained pipes together. Having every emitter clean itself up when all it's listeners are gone is a good way to avoid memory leak issues.
     // One place where this leads to unexpected behavior is if the pipe was defined globally. In this case, I should set "keep alive" to true
@@ -78,7 +116,15 @@ export function CJAXService<T>(init: T, opts?: ServiceOpts): Service<T> {
 
     // This service calls its own listen function to connect the pipe
     const unsubscribe = listen((e: T) => {
+      const start = SLOW_POKE_HUNTER ? Date.now() : null;
+
       const modified = modifier(e);
+
+      if (SLOW_POKE_HUNTER && start !== null) {
+        catchSlowPoke(Date.now() - start, e, prevArg, closureStack);
+        if (CJAX_DEFAULT_DISTINCT_FIG) prevArg = CJAX_DEFAULT_DISTINCT_FIG?.copy(e);
+      }
+
       if (modified === undefined) return; // the pipe can also function as a filter if the modifier has a return undefined case
       piped.update(modified);
     }, true); // skipping current because I already handle the current state setting up the init above
@@ -158,31 +204,30 @@ export function cjaxJoin<A extends unknown[]>(...emitters: [...EmitterTuple<A>])
   return asEmitter(joined);
 }
 
-// export function deepDistinctPipe<T>() {
-//   let cachedState: T | undefined;
-//   return (newState: T) => {
-//     if (!deepEqual(newState, cachedState)) {
-//       cachedState = cloneDeep(newState);
-//       return cachedState;
-//     } else return undefined; // The idea with this pipe is that when the new state is deepEqual to the old state, I return undefined, which (with how I've written pipes) will prevent an event from getting processed through
-//   };
-// }
+// * VIDEO COMMENT - https://www.loom.com/share/f719d005d25044619248adf3088de539
+export function ignoreRepeats<T>(distinctionFig?: CjaxDistincterFig) {
+  const { copy, comparator } = distinctionFig ||
+    CJAX_DEFAULT_DISTINCT_FIG || {
+      copy: (x: T) => {
+        if (typeof x === "object")
+          console.warn(
+            `You threw a distinctPipe onto a service which is emitting an object and you did not provide a distict checker configuration. This will lead to unexpected issues in your render cycle`
+          );
+        return x;
+      },
+      comparator: (a: T | undefined, b: T | undefined) => a === b,
+    };
 
-// // Takes an initial value and returns a function for processing the new state
-// export function deepDistinctCallback<T>(init: T) {
-//   let cachedState: T = init;
-//   return (newState: T) => {
-//     // The returned function checks whether the new state is meaningfully different from the old state (!deepEqual)
-//     // If they are different it re-assigns cachedState to a copy of newState. This will be !== from the old state (ensuring a react re-render)
-//     if (!deepEqual(newState, cachedState)) cachedState = cloneDeep(newState);
-//     // If the re-assignment above did't happen, then the cachedState will be returned. If this is being used to parse the output of a service, then the cachedState will be === equal to the last event (ensuring react doesn't do a re-render)
-//     return cachedState;
-//   };
-// }
+  let cached: T;
+  return (event: T): T | undefined => {
+    if (comparator(cached, event)) return; // * CJAX short hand for don't process
+    cached = copy(event);
+    return event;
+  };
+}
 
 const zeroListenersReason = "the number of listeners to this service dropped to 0";
 
 export type IffyMitter<T> = Emitter<T> | Emitter<T | undefined> | undefined;
 export type IffyServ<T> = Service<T> | Service<T | undefined> | undefined;
-
 export type EmitterValue<T extends Emitter<any> | undefined> = T extends Emitter<infer U> ? U : never;
