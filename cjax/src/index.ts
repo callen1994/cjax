@@ -48,7 +48,7 @@ export interface Emitter<T> {
 }
 
 export interface Service<T> extends Emitter<T> {
-  update: (newVal: T | ((x: T) => T)) => void;
+  update: (newVal: T | ((x: T) => T | undefined)) => void;
 }
 
 // From a typing perspective the Service is an emitter with more features, but from an implementation perspective
@@ -139,14 +139,23 @@ export function CJAXService<T>(init: T, opts?: ServiceOpts): Service<T> {
 
   // the function will basically have the ability to mutate my state, but that's the whole point
   // the only way to mutate the state is in here and this will then emit, and that emission will tell everyone else what's up
-  function update(newVal: T | ((x: T) => T)) {
+  function update(newVal: T | ((x: T) => T | undefined)) {
+    if (newVal === undefined) {
+      console.warn(
+        `You are updating the state of this service with undefined. Undefined in CJAX is generally treated as a "nevermind, don't operate" value, so this is probably not what you want to do.`
+      );
+    }
     if (typeof newVal === "function" && state === undefined) {
       console.warn(
         `Warning, you're trying to update the state of this service with a function, but the current state is undefined!!`
       );
       console.warn(state);
     }
-    const updated = typeof newVal === "function" ? (newVal as any)(state) : newVal;
+    let updated: T;
+    if (typeof newVal === "function") {
+      updated = (newVal as any)(state);
+      if (updated === undefined) return; // ? I'm leaning in a little more into the idea the undefined represents "actually nevermind" in the update function. This is already applied in the pipe world, and I'm giving that option here now
+    } else updated = newVal;
     state = updated;
     listeners.forEach((l) => l(updated));
   }
