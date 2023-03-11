@@ -1,0 +1,24 @@
+{
+  "name": "@cjax/deployer",
+  "version": "1.2.2",
+  "description": "a collection of node scripts for getting an app deployed to a vpx",
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "rm -rf ./dist && tsc",
+    "publish-it": "npm run build && npm publish --access=public"
+  },
+  "author": "Connor James Allen",
+  "license": "ISC",
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.11",
+    "@types/lodash": "^4.14.189",
+    "@types/node": "^18.11.9",
+    "@types/ssh2": "^1.11.6",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "lodash": "^4.17.21",
+    "ssh2": "^1.11.0"
+  }
+}

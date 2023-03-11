@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "sourceMap": false,
+    "outDir": "dist",
+    "strict": true,
+    "skipLibCheck": true, // I think the multiple requests had something to do with multer and the hot-reloading not playing well together. This seems to have fixed the problem
+    "declaration": true
+  },
+  "extends": "@tsconfig/node12/tsconfig.json"
+}
