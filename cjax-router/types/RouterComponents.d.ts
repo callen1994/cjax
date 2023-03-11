@@ -19,7 +19,7 @@ interface LinkProps {
     routeUpdates?: Parameters<typeof ROUTER$.update>[0];
     style?: CSSProperties;
 }
-export declare function Link({ to, routeUpdates, onClick, className, children, style, ...props }: PropsWithChildren<LinkProps>): JSX.Element;
+export declare function Link({ to, routeUpdates, onClick, className, children, style, ...props }: PropsWithChildren<LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement>>): JSX.Element;
 interface RouterPipeOutletProps {
     currentSection$: IffyMitter<RouteFig>;
     fallback?: React.FC<{}>;

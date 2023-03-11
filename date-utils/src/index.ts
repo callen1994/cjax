@@ -206,6 +206,18 @@ export function prettyDate(d?: Date) {
   );
 }
 
+/**
+ *
+ * @param d Date Object
+ * @returns New date which is one day after the given date. Undefined if the given date is invalid.
+ */
+export function addOneDay(d: Date) {
+  const ret = myDateMaker(d);
+  if (!ret) return undefined;
+  ret.setDate(ret.getDate() + 1);
+  return ret;
+}
+
 // I'm not importing date-fns on the server, so these can't go into date-utils
 export function myFormatTimeAgo(input: string | number | Date | null | undefined) {
   const parsed = myDateMaker(input);
@@ -217,4 +229,17 @@ export function myFormatDate(input: string | number | Date | null | undefined, f
   const parsed = myDateMaker(input);
   if (!parsed) return "N/A";
   return datefnsFormat(parsed, format);
+}
+
+// Reference for Intl.DateTimeFormat https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat
+export function caliTimestamp(date: Date) {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Los_Angeles",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+  });
+  return formatter.format(date);
 }

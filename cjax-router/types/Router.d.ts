@@ -6,6 +6,9 @@ export interface RouteFig {
 }
 export declare const ROUTER$: import("@cjax/cjax").Service<URL>;
 export declare function INIT_ROUTER(): void;
+export declare function alterUrlPrams(url: URL, newParams: {
+    [key: string]: string | null;
+}): URL;
 export declare function updateSearchParams(newParams: {
     [key: string]: string | null;
 }): void;

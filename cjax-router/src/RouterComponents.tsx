@@ -29,39 +29,30 @@ export function LinkCollection<T extends RouteFig>({
   );
 }
 
-interface LinkProps {
-  to: string;
-  onClick?: (e: any) => any;
-  className?: string;
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  to?: string;
   routeUpdates?: Parameters<typeof ROUTER$.update>[0]; // * when they click the link these updates will fire it's as simple as that
-  style?: CSSProperties;
 }
 
-export function Link({
-  to,
-  routeUpdates,
-  onClick,
-  className,
-  children,
-  style,
-  ...props
-}: PropsWithChildren<LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement>>) {
+export function Link({ to, routeUpdates, onClick, children, ...props }: PropsWithChildren<LinkProps>) {
   return (
     <a
       {...props}
-      className={className + " cursor-pointer"}
-      style={style}
       onClick={(e) => {
-        e.preventDefault();
         onClick?.(e);
-        ROUTER$.update((oldURL) => {
-          if (!oldURL) return oldURL;
+        if (!to && !routeUpdates) return; // ? If neither of these are specified, then the caller doesn't want to update the router, and presumably href was passed
+        e.preventDefault();
+        return ROUTER$.update((oldURL) => {
+          if (!oldURL) return undefined;
           // the user wants to just overwrite the whole object with a new thing (this will ignore anything in the to parameter)
           if (typeof routeUpdates === "object") return routeUpdates;
           // the user wants to update specifically the path
           if (to) oldURL.pathname = to;
           // the user wants to apply some other function updates based on the url (the updates in the function should respect the update in the to parameter)
-          if (routeUpdates) oldURL = routeUpdates(oldURL);
+          if (routeUpdates) {
+            const appliedUpdates = routeUpdates(oldURL);
+            if (appliedUpdates) oldURL = appliedUpdates;
+          }
           return oldURL;
         });
       }}>
