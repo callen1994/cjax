@@ -1,11 +1,13 @@
 import { config } from "dotenv";
 // Than's Stack overflow https://stackoverflow.com/questions/50587502/nodejs-execute-command-on-remote-linux-server
-import { Client } from "ssh2";
+import { Client, ConnectConfig } from "ssh2";
 import path from "path";
 import { connectClient, doOnServer } from "./ssh2-helpers";
 import { readFileSync } from "fs";
 import { getValidEnv, executeHere, asyncMap, startImAliver } from "./utils";
 import { endsWith } from "lodash";
+
+export { doOnServer };
 
 interface Config {
   vps_connection_env_path: string;
@@ -22,6 +24,11 @@ interface Config {
   pm2_prod_config_path?: string; // Should be relative to the project root, it will be referenced on the server
   prod_port?: string;
   sleep_before_start?: number; // milliseconds
+}
+
+export async function testClient(config: ConnectConfig) {
+  const client = await connectClient(new Client(), config);
+  return client;
 }
 
 // This should have the host, user and pem file path
