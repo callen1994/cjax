@@ -1,7 +1,7 @@
 import { useCJAX } from "./NewerHooks";
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { Emitter, CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG, slowPokeWrap } from "@cjax/cjax";
-import { testLogInternalListener, testLogUseCjaxListener, usePipeHereTestUseEffect } from "./testLogging";
+import { testLogInternalListener, usePipeHereTestUseEffect } from "./testLogging";
 
 // * VIDEO COMMENT - https://www.loom.com/share/e5c8605bf753436e8eb71fcc0d8bffbd
 export function useCJAX_SYNC_STOR_METHOD<T>(
@@ -23,7 +23,6 @@ export function useCJAX_SYNC_STOR_METHOD<T>(
 
     return () => {
       const newState = serv.current();
-      testLogUseCjaxListener(test, copy, comparator, newState, cachedState);
       slowPokeWrap("Use CJAX compare / copy", cjaxCallContext, () => {
         if (!comparator(cachedState, newState)) cachedState = copy(newState);
       });
@@ -40,7 +39,7 @@ export function useCJAX_SYNC_STOR_METHOD<T>(
 // * VIDEO COMMENT - https://www.loom.com/share/fd748af41fe94c389d0023b06947e431
 /**
  *
- * @deprecated usePipe is depreciated in favor of usePipeNEW
+ * @deprecated usePipe is depreciated in favor of usePiped
  */
 export function usePipe<T>(
   // ! usePipe is ONLY for pipes that's why this pipe builder can only return an Emitter. Constructing a service should happen in a useMemo
@@ -80,7 +79,7 @@ export function usePipe<T>(
 
 /**
  *
- * @deprecated usePipe is depreciated in favor of usePipeNEW
+ * @deprecated usePipe is depreciated in favor of usePiped
  */
 export function usePipeHere<T>(
   pipeBuilder: () => Emitter<T> | undefined, // * usePipe and the Constructor

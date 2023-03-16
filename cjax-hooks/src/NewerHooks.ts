@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"; // Because of react, this file is not safe to import on the server
-import { Emitter, CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG, slowPokeWrap } from "@cjax/cjax";
-import { testLogUseCjaxListener, usePipeHereTestUseEffect } from "./testLogging";
+import { Emitter, CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG, slowPokeWrap, ignoreRepeats } from "@cjax/cjax";
+import { usePipeHereTestUseEffect } from "./testLogging";
 import { CJAXHookOpts, internalListener } from "./Utils";
 import { useJoinPiped, usePiped } from "./UsePiped";
 export * from "./UsePiped";
@@ -12,29 +12,26 @@ export function useCJAX<T>(
 ): T | undefined {
   // * VIDEO COMMENT - WHY NOT useSyncExternalStore?? https://www.loom.com/share/e5c8605bf753436e8eb71fcc0d8bffbd
   const [outputState, setOutPutState] = useState<T>();
-  const cjaxCallContext = new Error(); // ? For Bug Tracing (the call stack inside a useEffect is not very helpful)
+  const pipeCtx = {
+    details: "useCJAX Distinction pipe",
+    callContext: new Error(), // ? For Bug Tracing (the call stack inside a useEffect is not very helpful)
+  };
   const [_, setForceUpdate] = useState(false);
 
   useEffect(() => {
-    const figToUse = distincterFig === undefined ? CJAX_DEFAULT_DISTINCT_FIG.fig : distincterFig;
-    if (!figToUse) return serv?.listen(setOutPutState);
-    const { copy, comparator } = figToUse;
-    let cachedState: T;
+    serv && setOutPutState(serv.current());
+    const pipeToListen = distincterFig === null ? serv : serv?.pipe(ignoreRepeats(distincterFig, pipeCtx));
+    return pipeToListen?.listen((newState) => {
+      if (newState === undefined) return;
 
-    // * VIDEO COMMENT: Reference Fun - https://www.loom.com/share/c3e44e406b6b4b1cb14f041dfcc68d7c
-    const updateState = (newState: T) =>
-      slowPokeWrap("Use CJAX copy", cjaxCallContext, () => {
-        cachedState = copy(newState); // ? The cached state must be (deeply) distinct from both the state managed in the service and the state returned to the hook caller. So that mutations on those external pieces don't result in a failure to detect a change properly
-        const forceRenderRequired = outputState === newState; // ? If the output state was previously the same reference as the new state then we need to force a re-render because react doesn't think it's necessary in the previous render
-        setOutPutState(newState);
-        if (forceRenderRequired) setForceUpdate((v) => !v);
-      });
-
-    serv && updateState(serv.current());
-    return serv?.listen((newState) => {
-      testLogUseCjaxListener(test, copy, comparator, newState, cachedState);
-      const same = slowPokeWrap("Use CJAX compare", cjaxCallContext, () => comparator(cachedState, newState));
-      if (!same) updateState(newState);
+      // * VIDEO COMMENT: Reference Fun - https://www.loom.com/share/c3e44e406b6b4b1cb14f041dfcc68d7c
+      const forceRenderRequired = outputState === newState;
+      setOutPutState(newState);
+      // * Docs on "typeof" - https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/typeof
+      // ? Objects and functions (which are objects) are susceptible to the same-reference new-value problem that "===" doesn't solve. So we force a re-render if the new value is an object or function
+      // ? I know that the new value is a change worth responding to because the ignore repeats pipe is in place
+      if ((forceRenderRequired && typeof outputState === "object") || typeof outputState === "function")
+        setForceUpdate((v) => !v);
     });
   }, [serv, distincterFig]);
   return outputState;

@@ -1,4 +1,5 @@
 import { asEmitter, CJAXService, Emitter, Service } from "./Cjax";
+import { slowPokeWrap } from "./DebugTools";
 
 // Either an empty object or it's neither
 export type CjaxDistincterFig = {
@@ -51,7 +52,11 @@ export function cjaxJoin<A extends unknown[]>(...emitters: [...EmitterTuple<A>])
 }
 
 // * VIDEO COMMENT - https://www.loom.com/share/f719d005d25044619248adf3088de539
-export function ignoreRepeats<T>(distinctionFig?: CjaxDistincterFig) {
+export function ignoreRepeats<T>(
+  distinctionFig?: NonNullable<CjaxDistincterFig>,
+  deets?: { callContext: Error; details: string }
+) {
+  const ignoreRepeatContext = new Error();
   const { copy, comparator } = distinctionFig ||
     CJAX_DEFAULT_DISTINCT_FIG.fig || {
       copy: (x: T) => {
@@ -66,9 +71,11 @@ export function ignoreRepeats<T>(distinctionFig?: CjaxDistincterFig) {
 
   let cached: T;
   return (event: T): T | undefined => {
-    if (comparator(cached, event)) return; // * CJAX short hand for don't process
-    cached = copy(event);
-    return event;
+    return slowPokeWrap(deets?.details || "Ignore repeats call", deets?.callContext || ignoreRepeatContext, () => {
+      if (comparator(cached, event)) return; // * CJAX short hand for don't process
+      cached = copy(event); // ? The cached state must be (deeply) distinct from both the state managed in the service and the state returned to the hook caller. So that mutations on those external pieces don't result in a failure to detect a change properly
+      return event;
+    });
   };
 }
 
