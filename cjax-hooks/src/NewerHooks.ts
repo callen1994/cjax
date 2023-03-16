@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"; // Because of react, this file is not safe to import on the server
+import { useEffect, useState } from "react"; // Because of react, this file is not safe to import on the server
 import { Emitter, CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG, slowPokeWrap } from "@cjax/cjax";
 import { testLogUseCjaxListener, usePipeHereTestUseEffect } from "./testLogging";
 import { CJAXHookOpts, internalListener } from "./Utils";
@@ -12,7 +12,8 @@ export function useCJAX<T>(
 ): T | undefined {
   // * VIDEO COMMENT - WHY NOT useSyncExternalStore?? https://www.loom.com/share/e5c8605bf753436e8eb71fcc0d8bffbd
   const [outputState, setOutPutState] = useState<T>();
-  const cjaxCallContext = new Error();
+  const cjaxCallContext = new Error(); // ? For Bug Tracing (the call stack inside a useEffect is not very helpful)
+  const [_, setForceUpdate] = useState(false);
 
   useEffect(() => {
     const figToUse = distincterFig === undefined ? CJAX_DEFAULT_DISTINCT_FIG.fig : distincterFig;
@@ -23,14 +24,13 @@ export function useCJAX<T>(
     // * VIDEO COMMENT: Reference Fun - https://www.loom.com/share/c3e44e406b6b4b1cb14f041dfcc68d7c
     const updateState = (newState: T) =>
       slowPokeWrap("Use CJAX copy", cjaxCallContext, () => {
-        // ? MUST BE DIFFERENT REFERENCE FROM PREV STATE
-        cachedState = copy(newState);
-        // ? MUST BE DIFFERENT REFERENCE FROM PREV STATE AND NOT A REFERENCE TO CACHED STATE (in case user mutates the output state)
-        setOutPutState(copy(newState));
+        cachedState = copy(newState); // ? The cached state must be (deeply) distinct from both the state managed in the service and the state returned to the hook caller. So that mutations on those external pieces don't result in a failure to detect a change properly
+        const forceRenderRequired = outputState === newState; // ? If the output state was previously the same reference as the new state then we need to force a re-render because react doesn't think it's necessary in the previous render
+        setOutPutState(newState);
+        if (forceRenderRequired) setForceUpdate((v) => !v);
       });
 
     serv && updateState(serv.current());
-
     return serv?.listen((newState) => {
       testLogUseCjaxListener(test, copy, comparator, newState, cachedState);
       const same = slowPokeWrap("Use CJAX compare", cjaxCallContext, () => comparator(cachedState, newState));
@@ -40,11 +40,7 @@ export function useCJAX<T>(
   return outputState;
 }
 
-export function useCustomBuiltCJAX<T>(
-  builder: () => Emitter<T> | undefined,
-  dependencies: any[] = [],
-  opts?: CJAXHookOpts
-) {
+export function useCustomPipe<T>(builder: () => Emitter<T> | undefined, dependencies: any[], opts?: CJAXHookOpts) {
   const { test } = opts || {};
   const [piped$, setPiped] = useState<Emitter<T | undefined>>();
 
@@ -82,9 +78,9 @@ export function useJoinPipedHere<A extends unknown[], O>(...args: Parameters<typ
   return [data, piped$] as const;
 }
 
-export function useBuiltHere<T>(...args: Parameters<typeof useCustomBuiltCJAX<T>>) {
+export function useCustomPipeHere<T>(...args: Parameters<typeof useCustomPipe<T>>) {
   // ? Skipping the internal listener because it shouldn't be necessary. I'm listening just below in the useCJAX hook
-  const piped$ = useCustomBuiltCJAX(args[0], args[1], { ...args[2], dontListenInternal: true });
+  const piped$ = useCustomPipe(args[0], args[1], { ...args[2], dontListenInternal: true });
   usePipeHereTestUseEffect(piped$, args[2]?.test);
   const data = useCJAX(piped$, args[2]?.distincter, args[2]?.test);
   return [data, piped$] as const;

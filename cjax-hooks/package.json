@@ -1,6 +1,6 @@
 {
   "name": "@cjax/cjax-hooks",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "React hooks which tie into the cjax state management library",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
