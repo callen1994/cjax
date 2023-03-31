@@ -1,6 +1,6 @@
 {
   "name": "@cjax/date-utils",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A suite of dependency-free utility functions that Connor has curated for his web development needs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

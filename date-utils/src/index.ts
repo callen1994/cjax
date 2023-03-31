@@ -62,7 +62,8 @@ export function myDateMaker(input: string | number | Date | null | undefined): D
       return parseInt(seg);
     });
     ret =
-      split.every((seg) => !isNaN(seg)) && split.length === 3
+      // ? In the very specific case where the format is yyyy-mm-dd I want to parse differently from the default Date constructor. Otherwise I'll use the default date constructor
+      split.every((seg) => !isNaN(seg)) && split.length === 3 && split[0].toString().length === 4
         ? new Date(split[0], split[1] - 1, split[2])
         : new Date(input);
   }
