@@ -7,7 +7,7 @@ export interface RouteFig {
   default?: boolean;
 }
 
-export const ROUTER$ = CJAXService<URL>(new URL(window.location.href));
+export const ROUTER$ = new CJAXService<URL>(new URL(window.location.href));
 
 export function INIT_ROUTER() {
   // When the active history entry changes while the user navigates the session history

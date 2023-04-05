@@ -52,7 +52,7 @@ export function useCustomPipe<T>(builder: () => Emitter<T> | undefined, dependen
     setPiped(outputPipe);
     return () => {
       if (test) console.log(`${test} pipe getting cleaned up`);
-      return outputPipe.complete("");
+      return outputPipe.complete();
     };
   }, dependencies);
 

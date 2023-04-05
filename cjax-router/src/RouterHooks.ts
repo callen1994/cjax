@@ -1,4 +1,4 @@
-import { usePipe, usePipeHere } from "@cjax/cjax-hooks";
+import { useCustomPipe, usePipedHere } from "@cjax/cjax-hooks";
 import { useEffect, useMemo } from "react";
 import { navAtDepth, RouteFig, ROUTER$, updateSearchParams } from "./Router";
 
@@ -9,16 +9,18 @@ interface UseSearchParamOptions {
 }
 
 export function useSearchParam(field: string, { fallback, test, preserved }: UseSearchParamOptions = {}) {
-  const [fromRouter] = usePipeHere(() => {
-    return ROUTER$?.pipe((url) => {
+  const [fromRouter] = usePipedHere(
+    ROUTER$,
+    (url) => {
       const val = url.searchParams.get(field);
       if (val) return val;
       if (fallback) {
         updateSearchParams({ [field]: fallback });
         return fallback; // If I know that the value is supposed to be this there's no point waiting for the router event to re-trigger the pipe here, I can just return it immediately
       }
-    });
-  }, [fallback]);
+    },
+    [fallback]
+  );
 
   const setRouter = useMemo(
     () => (d: string | undefined) => {
@@ -54,7 +56,7 @@ export function useParsedSearchParam<T>(
 
 export function useCurrentRoute<T extends RouteFig>(parentRoute: string[], routes: T[]) {
   // ? If this hook is called with the parent route constructed ile ['/reports'] then that results in an infinite loop, but when it's spread, that shouldn't break it
-  return usePipe(() => buildRoutePipe(parentRoute, routes), [...parentRoute, routes]);
+  return useCustomPipe(() => buildRoutePipe(parentRoute, routes), [...parentRoute, routes]);
 }
 
 export function buildRoutePipe<T extends RouteFig>(parentRoute: string[], routes: T[]) {

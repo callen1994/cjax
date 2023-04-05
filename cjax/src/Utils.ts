@@ -1,4 +1,4 @@
-import { asEmitter, CJAXService, Emitter, Service } from "./Cjax";
+import { asEmitter, CJAXService, Emitter } from "./Cjax";
 import { slowPokeWrap } from "./DebugTools";
 
 // Either an empty object or it's neither
@@ -14,7 +14,7 @@ export function SET_CJAX_DISTINCTION_FIG(fig: CjaxDistincterFig) {
   CJAX_DEFAULT_DISTINCT_FIG.fig = fig;
 }
 
-type EitherType<T> = Service<T> | Emitter<T>;
+type EitherType<T> = CJAXService<T> | Emitter<T>;
 export function cjaxProm<T>(serv: EitherType<T>): Promise<T> {
   return new Promise<T>((res) => {
     const val = serv.current();
@@ -36,9 +36,7 @@ export function cjaxJoin<A extends unknown[]>(...emitters: [...EmitterTuple<A>])
   // I like the idea that the join doesn't emit until all source emitters are present a lot more than emitting for when some aren't present
   if (!emitters.every((e) => !!e)) return undefined;
 
-  const joined = CJAXService<A>(emitters.map((e) => undefined) as A, {
-    extraCleanupFun: () => innerSubs.forEach((unsub) => unsub?.()),
-  });
+  const joined = new CJAXService<A>(emitters.map((e) => undefined) as A, () => innerSubs.forEach((unsub) => unsub?.()));
 
   innerSubs = emitters.map((source, i) =>
     source?.listen((e) => {
@@ -80,5 +78,5 @@ export function ignoreRepeats<T>(
 }
 
 export type IffyMitter<T> = Emitter<T> | Emitter<T | undefined> | undefined;
-export type IffyServ<T> = Service<T> | Service<T | undefined> | undefined;
+export type IffyServ<T> = CJAXService<T> | CJAXService<T | undefined> | undefined;
 export type EmitterValue<T extends Emitter<any> | undefined> = T extends Emitter<infer U> ? U : never;

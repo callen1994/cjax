@@ -22,8 +22,9 @@
     "typescript": "^4.8.3"
   },
   "peerDependencies": {
-    "react": "^18.2.0",
-    "@cjax/cjax-hooks": "^1.1.15"
+    "@cjax/cjax": "^1.4.2",
+    "@cjax/cjax-hooks": "^1.3.0",
+    "react": "^18.2.0"
   },
   "files": [
     "dist"

@@ -1,7 +1,7 @@
 import React from "react";
 import { IffyMitter } from "@cjax/cjax";
 import { useCJAX } from "@cjax/cjax-hooks";
-import { CSSProperties, PropsWithChildren } from "react";
+import { PropsWithChildren } from "react";
 import { ROUTER$, RouteFig } from "./Router";
 
 interface TopLinkSections<T extends RouteFig> {

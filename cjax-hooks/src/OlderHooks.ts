@@ -71,7 +71,7 @@ export function usePipe<T>(
     setPiped(built);
     return () => {
       if (test) console.log(`${test} pipe getting cleaned up`);
-      return built.complete("");
+      return built.complete();
     };
   }, dependencies); // if I add the pipeBuilder to this dependency array then I end up in an infinite loop... it's been working great without that dependency, so I don't want to fuck around with it...
   return piped$;

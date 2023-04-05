@@ -56,7 +56,7 @@ function useConstructAndSet<T>(
     setPiped(outputPipe);
     return () => {
       if (opts?.test) console.log(`${opts?.test} pipe getting cleaned up`);
-      return outputPipe.complete("");
+      return outputPipe.complete();
     };
   }, deps);
 }
