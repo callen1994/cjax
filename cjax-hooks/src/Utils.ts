@@ -17,7 +17,7 @@ export function internalListener<O>(
   // This did seem to help with my categorization transaction pipe issues...
   // ***
   if (!opts?.dontListenInternal) {
-    if (opts?.test) console.log(`${opts?.test} setting up parent listener`);
+    if (opts?.test) console.log(`${opts?.test} setting up internal listener`);
     outputPipe.listen((e) => testLogInternalListener(e, opts?.test));
   }
 }

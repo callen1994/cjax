@@ -58,10 +58,10 @@ export function ignoreRepeats<T>(
   const { copy, comparator } = distinctionFig ||
     CJAX_DEFAULT_DISTINCT_FIG.fig || {
       copy: (x: T) => {
-        if (typeof x === "object")
-          console.warn(
-            `You threw an ingoreRepeats pipe onto a service which is emitting an object and you did not provide a distinct checker configuration. This will lead to unexpected issues in your render cycle`
-          );
+        // if (typeof x === "object")
+        //   console.warn(
+        //     `You threw an ingoreRepeats pipe onto a service which is emitting an object and you did not provide a distinct checker configuration. This will lead to unexpected issues in your render cycle`
+        //   );
         return x;
       },
       comparator: (a: T | undefined, b: T | undefined) => a === b,

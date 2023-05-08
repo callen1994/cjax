@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"; // Because of react, this file is not safe to import on the server
-import { Emitter, CjaxDistincterFig, CJAX_DEFAULT_DISTINCT_FIG, slowPokeWrap, ignoreRepeats } from "@cjax/cjax";
+import { Emitter, CjaxDistincterFig, ignoreRepeats } from "@cjax/cjax";
 import { usePipeHereTestUseEffect } from "./testLogging";
 import { CJAXHookOpts, internalListener } from "./Utils";
 import { useJoinPiped, usePiped } from "./UsePiped";
@@ -12,16 +12,16 @@ export function useCJAX<T>(
 ): T | undefined {
   // * VIDEO COMMENT - WHY NOT useSyncExternalStore?? https://www.loom.com/share/e5c8605bf753436e8eb71fcc0d8bffbd
   const [outputState, setOutPutState] = useState<T>();
-  const pipeCtx = {
-    details: "useCJAX Distinction pipe",
-    callContext: new Error(), // ? For Bug Tracing (the call stack inside a useEffect is not very helpful)
-  };
   const [_, setForceUpdate] = useState(false);
 
   useEffect(() => {
     serv && setOutPutState(serv.current());
+    const pipeCtx = {
+      details: "useCJAX Distinction pipe",
+      callContext: new Error(), // ? For Bug Tracing (the call stack inside a useEffect is not very helpful)
+    };
     const pipeToListen = distincterFig === null ? serv : serv?.pipe(ignoreRepeats(distincterFig, pipeCtx));
-    return pipeToListen?.listen((newState) => {
+    const unsub = pipeToListen?.listen((newState) => {
       if (newState === undefined) return;
 
       // * VIDEO COMMENT: Reference Fun - https://www.loom.com/share/c3e44e406b6b4b1cb14f041dfcc68d7c
@@ -33,6 +33,11 @@ export function useCJAX<T>(
       if ((forceRenderRequired && typeof outputState === "object") || typeof outputState === "function")
         setForceUpdate((v) => !v);
     });
+
+    return () => {
+      if (test) console.log(`%c${test} useCJAX getting cleaned up`, "color: yellow;");
+      return unsub?.();
+    };
   }, [serv, distincterFig]);
   return outputState;
 }
@@ -44,14 +49,14 @@ export function useCustomPipe<T>(builder: () => Emitter<T> | undefined, dependen
   // * The idea is this is a quality of life thing. When you're using a pipe the source emitter will be default included in the dependencies array
 
   useEffect(() => {
-    if (test) console.log(`%c${test} Building pipe`, "color: yellow");
+    if (test) console.log(`%c${test} Building pipe`, "color: orange");
     const builtPipe = builder();
-    const outputPipe = builtPipe?.pipe((x) => x); // * Video on why this is necessary - https://www.loom.com/share/f4d3d87ebca4466cbf4aaec3e5f509a9
+    const outputPipe = builtPipe?.pipe((x) => x, test ? `(x) => x pipe for ${test}` : undefined); // * Video on why this is necessary - https://www.loom.com/share/f4d3d87ebca4466cbf4aaec3e5f509a9
     if (!outputPipe) return; // ? If I'm building a pipe that relies on other pipes that might not be ready yet, then the pipeBuilder will be returning undefined while the dependencies are still undefined (and I have to make sure I'm adding the dependencies! so it gets built once they are ready)
     internalListener(outputPipe, opts);
     setPiped(outputPipe);
     return () => {
-      if (test) console.log(`${test} pipe getting cleaned up`);
+      if (test) console.log(`%c${test} pipe getting cleaned up`, "color: orange");
       return outputPipe.complete();
     };
   }, dependencies);

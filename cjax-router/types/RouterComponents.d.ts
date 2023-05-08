@@ -1,6 +1,6 @@
 import React from "react";
 import { IffyMitter } from "@cjax/cjax";
-import { CSSProperties, PropsWithChildren } from "react";
+import { PropsWithChildren } from "react";
 import { ROUTER$, RouteFig } from "./Router";
 interface TopLinkSections<T extends RouteFig> {
     parentPath: string[];
@@ -12,14 +12,11 @@ interface TopLinkSections<T extends RouteFig> {
     }) => JSX.Element;
 }
 export declare function LinkCollection<T extends RouteFig>({ parentPath, sections, currentSection$, children, }: TopLinkSections<T>): JSX.Element;
-interface LinkProps {
-    to: string;
-    onClick?: (e: any) => any;
-    className?: string;
+interface LinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+    to?: string;
     routeUpdates?: Parameters<typeof ROUTER$.update>[0];
-    style?: CSSProperties;
 }
-export declare function Link({ to, routeUpdates, onClick, className, children, style, ...props }: PropsWithChildren<LinkProps & React.AnchorHTMLAttributes<HTMLAnchorElement>>): JSX.Element;
+export declare function Link({ to, routeUpdates, onClick, children, ...props }: PropsWithChildren<LinkProps>): JSX.Element;
 interface RouterPipeOutletProps {
     currentSection$: IffyMitter<RouteFig>;
     fallback?: React.FC<{}>;

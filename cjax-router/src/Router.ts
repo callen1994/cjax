@@ -7,6 +7,7 @@ export interface RouteFig {
   default?: boolean;
 }
 
+console.log("Building Router Object Service");
 export const ROUTER$ = new CJAXService<URL>(new URL(window.location.href));
 
 export function INIT_ROUTER() {

@@ -70,7 +70,7 @@ export function findRouteOrNavToDefault<R extends RouteFig>(url: URL, parentRout
   // if they aren't all the other logic should be ignored
   // I remove the slash characters from the route here because it's common that they might show up and I just want to ignore them
   if (!parentRoute.every((r, i) => split[i + 1] === r.split("/").join(""))) {
-    console.log("Ignoring because you're not on my route");
+    // console.log("Ignoring because you're not on my route");
     return;
   }
 
